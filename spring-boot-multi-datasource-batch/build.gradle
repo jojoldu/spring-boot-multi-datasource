@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':spring-boot-multi-datasource-core')
+    compile('org.springframework.boot:spring-boot-starter-batch')
+}

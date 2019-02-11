@@ -1,1 +1,5 @@
 rootProject.name = 'spring-boot-multi-datasource'
+include 'spring-boot-multi-datasource-core'
+include 'spring-boot-multi-datasource-batch'
+include 'spring-boot-multi-datasource-web'
+
