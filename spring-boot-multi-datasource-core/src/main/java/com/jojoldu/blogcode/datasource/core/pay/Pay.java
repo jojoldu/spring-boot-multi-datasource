@@ -1,4 +1,4 @@
-package com.jojoldu.blogcode.datasource.core.member;
+package com.jojoldu.blogcode.datasource.core.pay;
 
 import lombok.AccessLevel;
 import lombok.Getter;
