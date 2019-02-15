@@ -25,9 +25,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.inject.Qualifier;
 import javax.sql.DataSource;
 
-import static com.jojoldu.blogcode.datasource.web.config.MemberDatasourceConfig.DOMAIN_PACKAGE;
-import static com.jojoldu.blogcode.datasource.web.config.MemberDatasourceConfig.ENTITY_MANAGER;
-import static com.jojoldu.blogcode.datasource.web.config.MemberDatasourceConfig.TX_MANAGER;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.jojoldu.blogcode.datasource.web.config.LegacyDatasourceConfig.DOMAIN_PACKAGE;
+import static com.jojoldu.blogcode.datasource.web.config.LegacyDatasourceConfig.ENTITY_MANAGER;
+import static com.jojoldu.blogcode.datasource.web.config.LegacyDatasourceConfig.TX_MANAGER;
 
 /**
  * JPA를 분리해서 쓰기 위해선 3개가 필요
@@ -38,33 +41,25 @@ import static com.jojoldu.blogcode.datasource.web.config.MemberDatasourceConfig.
 @Configuration
 @EnableConfigurationProperties(JpaProperties.class)
 @EnableJpaRepositories(basePackages = DOMAIN_PACKAGE, entityManagerFactoryRef = ENTITY_MANAGER, transactionManagerRef = TX_MANAGER)
-public class MemberDatasourceConfig {
+public class LegacyDatasourceConfig {
 
-    public static final String DOMAIN_PACKAGE = "com.jojoldu.blogcode.datasource.core.member";
-    public static final String ENTITY_MANAGER = "memberEntityManager";
-    public static final String TX_MANAGER = "memberTxManager";
-    public static final String DATA_SOURCE = "memberDataSource";
-    public static final String VENDOR_ADAPTER = "memberJpaVendorAdapter";
-    public static final String ENTITY_FACTORY_BUILDER = "memberJpaEntityFactoryBuilder";
-    public static final String DATA_SOURCE_PROPERTIES = "memberDataSourceProperties";
+    public static final String DOMAIN_PACKAGE = "com.jojoldu.blogcode.datasource.core.legacy";
+    public static final String ENTITY_MANAGER = "legacyEntityManager";
+    public static final String TX_MANAGER = "legacyTxManager";
+    public static final String DATA_SOURCE = "legacyDataSource";
+    public static final String VENDOR_ADAPTER = "legacyJpaVendorAdapter";
+    public static final String DATA_SOURCE_PROPERTIES = "legacyDataSourceProperties";
 
     @Bean(DATA_SOURCE_PROPERTIES)
-    @ConfigurationProperties(prefix = "datasource.jpa")
-    public DataSourceProperties orderDataSourceProperties() {
+    @ConfigurationProperties(prefix = "datasource.legacy")
+    public DataSourceProperties dataSourceProperties() {
         return new DataSourceProperties();
     }
 
-    @Primary
-    @Bean(name = DATA_SOURCE)
-    @ConfigurationProperties(prefix = "datasource.jpa.hikari")
-    public DataSource jpaDataSource() {
-        return orderDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
-    }
-
-    @Primary
-    @Bean(name = TX_MANAGER)
-    public PlatformTransactionManager jpaSessionTxManager() {
-        return new JpaTransactionManager();
+    @Bean(DATA_SOURCE)
+    @ConfigurationProperties(prefix = "datasource.legacy.hikari")
+    public DataSource dataSource() {
+        return dataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean(VENDOR_ADAPTER)
@@ -77,34 +72,23 @@ public class MemberDatasourceConfig {
         return adapter;
     }
 
-    @Bean(ENTITY_FACTORY_BUILDER)
-    @Primary
-    public EntityManagerFactoryBuilder entityManagerFactoryBuilder(
+    @Bean(ENTITY_MANAGER)
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
             @Qualifier(VENDOR_ADAPTER) JpaVendorAdapter jpaVendorAdapter,
             ObjectProvider<PersistenceUnitManager> persistenceUnitManager,
-            JpaProperties jpaProperties
+            JpaProperties jpaProperties,
+            @Qualifier(DATA_SOURCE) DataSource dataSource
     ) {
-        return new EntityManagerFactoryBuilder(
-                jpaVendorAdapter, jpaProperties.getProperties(),
-                persistenceUnitManager.getIfAvailable());
-    }
-
-    @Bean(ENTITY_MANAGER)
-    @Primary
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
-            @Qualifier(ENTITY_FACTORY_BUILDER) EntityManagerFactoryBuilder factoryBuilder,
-            @Qualifier(DATA_SOURCE) DataSource dataSource,
-            JpaProperties jpaProperties
-    ) {
-        return factoryBuilder
+        return new EntityManagerFactoryBuilder(jpaVendorAdapter, jpaProperties.getProperties(), persistenceUnitManager.getIfAvailable())
                 .dataSource(dataSource)
                 .packages(DOMAIN_PACKAGE)
-                .properties(jpaProperties.getHibernateProperties(new HibernateSettings().ddlAuto(() -> {
-                    if (!EmbeddedDatabaseConnection.isEmbedded(dataSource)) {
-                        return "none";
-                    }
-                    return "create-drop";
-                })))
                 .build();
+    }
+
+    @Bean(TX_MANAGER)
+    public PlatformTransactionManager legacyTxManager(@Qualifier(ENTITY_MANAGER)LocalContainerEntityManagerFactoryBean entityManager) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManager.getObject());
+        return transactionManager;
     }
 }

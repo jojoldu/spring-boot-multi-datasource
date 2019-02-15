@@ -1,4 +1,4 @@
-package com.jojoldu.blogcode.datasource.core.pay;
+package com.jojoldu.blogcode.datasource.core.newly;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,0 +1,28 @@
+spring:
+  profiles:
+    active: local
+
+---
+spring:
+  profiles: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+datasource:
+  legacy:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:legacy;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    hikari:
+      pool-name: legacy-pool
+      maximum-pool-size: 3
+  newly:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:newly;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    hikari:
+      pool-name: newly-pool
+      maximum-pool-size: 20

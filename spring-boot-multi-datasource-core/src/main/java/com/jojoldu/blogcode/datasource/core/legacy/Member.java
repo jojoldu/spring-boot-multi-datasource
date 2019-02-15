@@ -1,4 +1,4 @@
-package com.jojoldu.blogcode.datasource.core.pay;
+package com.jojoldu.blogcode.datasource.core.legacy;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,13 +12,11 @@ import javax.persistence.Id;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Pay {
+public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private long amount;
     private String name;
-
 }
